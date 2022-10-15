@@ -4,6 +4,8 @@
 # Get an OpenVPN client configuration file
 #
 
+WITH_LDAP=${WITH_LDAP:-false}
+
 if [ "$DEBUG" == "1" ]; then
     set -x
 fi
@@ -35,9 +37,17 @@ get_client_config() {
 client
 nobind
 dev $OVPN_DEVICE
-remote-cert-tls server
+remote-cert-tls server"
 
-remote $OVPN_CN $OVPN_PORT $OVPN_PROTO"
+if [ "$WITH_LDAP" == "true" ]; then
+    echo ""
+    echo "auth-user-pass"
+    echo "auth-nocache"
+    echo "client-cert-not-required"
+    echo ""
+fi
+
+echo "remote $OVPN_CN $OVPN_PORT $OVPN_PROTO"
     if [ "$OVPN_PROTO" == "udp6" ]; then
         echo "remote $OVPN_CN $OVPN_PORT udp"
     fi
@@ -48,6 +58,7 @@ remote $OVPN_CN $OVPN_PORT $OVPN_PROTO"
       echo "$i"
     done
     if [ "$mode" == "combined" ]; then
+      if [ "$WITH_LDAP" == "false" ]; then
         echo "
 <key>
 $(cat $EASYRSA_PKI/private/${cn}.key)
@@ -55,6 +66,9 @@ $(cat $EASYRSA_PKI/private/${cn}.key)
 <cert>
 $(openssl x509 -in $EASYRSA_PKI/issued/${cn}.crt)
 </cert>
+"
+      fi
+echo "
 <ca>
 $(cat $EASYRSA_PKI/ca.crt)
 </ca>

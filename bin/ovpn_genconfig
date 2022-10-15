@@ -168,6 +168,9 @@ OVPN_SERVER=192.168.255.0/24
 OVPN_SERVER_URL=''
 OVPN_TLS_CIPHER=''
 
+
+WITH_LDAP=${WITH_LDAP:-0}
+
 # Import existing configuration if present
 [ -r "$OVPN_ENV" ] && source "$OVPN_ENV"
 
@@ -408,5 +411,27 @@ if diff -q "${bak:-}" "$conf" 2>/dev/null; then
     echo "Removing duplicate back-up: $bak"
     rm -fv "$bak"
 fi
+
+cp /etc/auth-ldap.conf /etc/openvpn/auth-ldap.conf.template
+
+cat >> /etc/openvpn/auth-ldap.conf<<EOF
+<LDAP>
+        URL             ldap://my-ldap.com:389
+        BindDN          "cn=admin,dc=domain,dc=com"
+        Password        password
+
+        Timeout         15
+        TLSEnable       no
+        FollowReferrals no
+</LDAP>
+
+<Authorization>
+        BaseDN              "ou=People,dc=domain,dc=com"
+        SearchFilter        "(&(uid=%u))"
+        RequireGroup        false
+</Authorization>
+
+EOF
+
 
 echo "Successfully generated config"
