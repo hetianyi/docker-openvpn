@@ -43,7 +43,6 @@ if [ "$WITH_LDAP" == "true" ]; then
     echo ""
     echo "auth-user-pass"
     echo "auth-nocache"
-    echo "client-cert-not-required"
     echo ""
 fi
 
